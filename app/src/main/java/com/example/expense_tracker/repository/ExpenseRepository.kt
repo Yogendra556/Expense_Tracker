@@ -9,19 +9,19 @@ class ExpenseRepository(
 ) {
 
     suspend fun addExpense(expenseEntity: expenseEntity){
-        ExpenseDao?.addExpense(expenseEntity)
+        ExpenseDao.addExpense(expenseEntity)
     }
 
     suspend fun updateExpense(expenseEntity: expenseEntity){
-        ExpenseDao?.updateExpense(expenseEntity)
+        ExpenseDao.updateExpense(expenseEntity)
     }
 
     suspend fun deleteExpense(id:Int){
-        ExpenseDao?.deleteExpense(id)
+        ExpenseDao.deleteExpense(id)
     }
 
-    suspend fun getExpenseList(){
-       ExpenseDao?.getAllExpense()
+    fun getExpenseList(): Flow<List<expenseEntity>> {
+        return ExpenseDao.getAllExpense()
     }
 
 

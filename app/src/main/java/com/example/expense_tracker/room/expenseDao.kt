@@ -14,13 +14,13 @@ interface expenseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addExpense(expenseEntity: expenseEntity)
 
-    @Update(onConflict = OnConflictStrategy.REPLACE)
+    @Update
     suspend fun updateExpense(expenseEntity: expenseEntity)
 
     @Query("DELETE FROM expenseEntity WHERE id=:id")
     suspend fun deleteExpense(id:Int)
 
     @Query("SELECT * FROM expenseEntity")
-    suspend fun getAllExpense(): Flow<List<expenseEntity>>
+    fun getAllExpense(): Flow<List<expenseEntity>>
 
 }
