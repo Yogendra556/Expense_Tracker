@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.expense_tracker.UILayer.FrontScreen
 import com.example.expense_tracker.repository.ExpenseRepository
 import com.example.expense_tracker.room.appDatabase
 import com.example.expense_tracker.room.expenseEntity
@@ -42,4 +43,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
+
 
