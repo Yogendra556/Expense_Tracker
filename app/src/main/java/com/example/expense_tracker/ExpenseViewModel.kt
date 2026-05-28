@@ -20,25 +20,32 @@ class ExpenseViewModel @Inject constructor(
     val message = _message.asSharedFlow()
 
 
-     fun addExpense(amount: String,type: String,description: String){
-        if(amount.isBlank() || type.isBlank() || description.isBlank()){
-              viewModelScope.launch {
-                  _message.emit("Please fill all fields")
-              }
-            return
-        }
-         val amountInt = amount.toInt()
-         val item = expenseEntity(
-             amount = amountInt,
-             type = type,
-             description = description,
-             dateTime = System.currentTimeMillis()
-         )
-         viewModelScope.launch {
-             repository.addExpense(item)
-             _message.emit("Expense Added!")
+     fun addExpense(amount: String,type: String,description: String) {
+         if (amount.isBlank() || type.isBlank() || description.isBlank()) {
+             viewModelScope.launch {
+                 _message.emit("Please fill all fields")
+             }
+             return
          }
-    }
+         val amountInt = amount.toIntOrNull()
+         if (amountInt == null) {
+             viewModelScope.launch {
+                 _message.emit("Invalid amount")
+             }
+             return
+         } else {
+             val item = expenseEntity(
+                 amount = amountInt,
+                 type = type,
+                 description = description,
+                 dateTime = System.currentTimeMillis()
+             )
+             viewModelScope.launch {
+                 repository.addExpense(item)
+                 _message.emit("Expense Added!")
+             }
+         }
+     }
 
     fun updateExpense(id: Int,amount:String,type: String,description: String){
         if(amount.isBlank() || type.isBlank() || description.isBlank()){
@@ -70,5 +77,9 @@ class ExpenseViewModel @Inject constructor(
 
     fun getExpense(): Flow<List<expenseEntity>>{
         return repository.getExpenseList()
+    }
+
+    fun getPreviousElement(id:Int?):expenseEntity{
+             return repository.getElement(id)
     }
 }

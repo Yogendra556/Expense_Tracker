@@ -3,8 +3,9 @@ package com.example.expense_tracker.repository
 import com.example.expense_tracker.room.expenseDao
 import com.example.expense_tracker.room.expenseEntity
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
-class ExpenseRepository(
+class ExpenseRepository @Inject constructor(
     private val ExpenseDao : expenseDao
 ) {
 
@@ -22,6 +23,10 @@ class ExpenseRepository(
 
     fun getExpenseList(): Flow<List<expenseEntity>> {
         return ExpenseDao.getAllExpense()
+    }
+
+    fun getElement(id:Int?):expenseEntity {
+        return ExpenseDao.getElement(id)
     }
 
 

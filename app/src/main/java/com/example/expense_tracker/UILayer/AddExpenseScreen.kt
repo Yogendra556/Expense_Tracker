@@ -2,7 +2,16 @@ package com.example.expense_tracker.UILayer
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -10,24 +19,102 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.expense_tracker.ExpenseViewModel
+import com.example.expense_tracker.room.expenseEntity
 
 
 
+
+// Hilt view model causes rendering issue therefore for preview remove viewmodel
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddexpenseCard(){
-    Column() {
-        var amount by remember {
-            mutableStateOf("")
+fun AddexpenseCard(
+    id: Int,
+    navController: NavController,
+    viewModel: ExpenseViewModel = hiltViewModel()
+){
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        val options = listOf(
+            "income",
+            "expense"
+        )
+            val previousItem =viewModel.getPreviousElement(id)
+
+            var amount by remember {
+                mutableStateOf(if(id!=-1) "${previousItem.amount}" else "")
+            }
+            var description by remember {
+                mutableStateOf(if(id!=-1) "${previousItem.description}" else "")
+            }
+            var type by remember {
+                mutableStateOf(if(id!=-1) "${previousItem.type}" else options[0])
+            }
+
+        var expanded by remember {
+            mutableStateOf(false)
         }
-        var type by remember {
-            mutableStateOf("")
+        Box(
+          modifier = Modifier
+              .padding(12.dp)
+        ){
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = {
+                    expanded = !expanded
+                }
+            ) {
+                OutlinedTextField(
+                    value = type,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = {
+                        Text("Category")
+                    },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded)
+                    },
+                    modifier = Modifier.menuAnchor(
+                        MenuAnchorType.PrimaryNotEditable
+                    )
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = {
+                        expanded = false
+                    }
+                ) {
+                    options.forEach { item->
+                        DropdownMenuItem(
+                           text = {
+                               Text(item)
+                           },
+                            onClick = {
+                                expanded = false
+                                type = item
+                            }
+                        )
+                    }
+                }
+            }
         }
-        var description by remember {
-            mutableStateOf("")
-        }
-        Box(){
+        Box(
+            modifier = Modifier
+                .padding(12.dp)
+        ){
             TextField(
                 value = amount,
                 onValueChange = {
@@ -42,7 +129,10 @@ fun AddexpenseCard(){
             )
 
         }
-        Box(){
+        Box(
+            modifier = Modifier
+                .padding(12.dp)
+        ){
             TextField(
                 value = description,
                 onValueChange = {
@@ -53,22 +143,35 @@ fun AddexpenseCard(){
                 }
             )
         }
-        Box(){
-            TextField(
-                value = type,
-                onValueChange = {
-                    type = it;
-                },
-                label = {
-                    Text("Amount")
+        Button(
+            modifier = Modifier
+                .padding(top=28.dp),
+            onClick = {
+                if(id!=-1){
+                    viewModel.updateExpense(id,amount,type,description)
                 }
-            )
+                else{
+                    viewModel.addExpense(amount,type,description)
+                }
+            }
+        ) {
+            Text("ADD+")
         }
     }
 }
 
+
+
 @Preview(showBackground = true)
 @Composable
 fun AddScreenPreview(){
-    AddexpenseCard()
+    val toUpdate = false;
+    val item = expenseEntity(
+        amount = 0,
+        type = "",
+        description = "",
+        dateTime = 0
+    )
+    val navController = rememberNavController()
+    AddexpenseCard(-1,navController)
 }
