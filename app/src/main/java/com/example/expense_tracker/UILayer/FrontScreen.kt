@@ -11,14 +11,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -41,6 +51,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.expense_tracker.ExpenseViewModel
 import com.example.expense_tracker.room.expenseEntity
+import java.time.LocalDate
+import kotlin.math.exp
 
 @Composable
 fun frontScreenRoute(
@@ -51,24 +63,109 @@ fun frontScreenRoute(
     FrontScreen(navController,item)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FrontScreen(
     navController: NavController,
    expenseList : List<expenseEntity>,
-    viewModel: ExpenseViewModel = hiltViewModel()
+//    viewModel: ExpenseViewModel = hiltViewModel()
 ){
         Column(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(top = 8.dp)
                 .fillMaxSize()
         ) {
             Box(
-
+               modifier = Modifier
+                   .padding(top = 12.dp,start = 12.dp,end = 12.dp)
             ) {
-                Text("Month")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val month = LocalDate.now().month.name
+                        IconButton(onClick = {}) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "Previous Month"
+                            )
+                        }
+                        Text(
+                            fontSize = 18.sp,
+                            text = "${month}"
+                        )
+                        IconButton(onClick = {}) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "Previous Month"
+                            )
+                        }
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+//                        Text(
+//                            modifier = Modifier
+//                                .align(Alignment.End)
+//                                .padding(end = 12.dp),
+//                            text = "filter"
+//                        )
+                        var expanded by remember{
+                            mutableStateOf(false)
+                        }
+                        var filter by remember{
+                            mutableStateOf("")
+                        }
+                        ExposedDropdownMenuBox(
+                             expanded = expanded,
+                             onExpandedChange = {
+                                 expanded = !expanded
+                             },
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(end = 12.dp),
+                        ) {
+                            OutlinedTextField(
+                                value = "Filter",
+                                 onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded)
+                                },
+                                modifier = Modifier.menuAnchor(
+                                    MenuAnchorType.PrimaryNotEditable
+                                ).fillMaxWidth(0.5f)
+                            )
+                            ExposedDropdownMenu(
+                               expanded = expanded,
+                                onDismissRequest = {
+                                    expanded = false
+                                }
+                            ){
+                                listOf("filter1","filter2").forEach { item->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(item)
+                                        },
+                                        onClick = {
+                                            expanded = false
+                                            filter = item
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
             Box(
                 modifier = Modifier
+                    .padding(top = 12.dp)
                     .fillMaxSize()
                     .background(color = Color.Red)
             ) {
@@ -93,17 +190,17 @@ fun FrontScreen(
                 }
             }
         }
-
-
 }
 
 @Composable
 fun expenseCard(
     item : expenseEntity,
     navController: NavController,
-    viewModel: ExpenseViewModel = hiltViewModel()
+//    viewModel: ExpenseViewModel = hiltViewModel()
 ){
-    Column() {
+    Column(
+        modifier = Modifier.padding(8.dp)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -131,7 +228,7 @@ fun expenseCard(
                 modifier = Modifier
             ){
                 IconButton(onClick = {
-                    viewModel.deleteExpense(item.id)
+//                    viewModel.deleteExpense(item.id)
                 }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -143,9 +240,7 @@ fun expenseCard(
     }
 }
 
-fun updateExpense(item: expenseEntity){
 
-}
 @Preview(showBackground = true)
 @Composable
 fun FrontScreenView(){

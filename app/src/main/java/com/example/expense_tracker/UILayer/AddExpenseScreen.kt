@@ -51,7 +51,7 @@ fun AddexpenseCard(
             "income",
             "expense"
         )
-            val previousItem =viewModel.getPreviousElement(id)
+            val previousItem = viewModel.getPreviousElement(id)
 
             var amount by remember {
                 mutableStateOf(if(id!=-1) "${previousItem.amount}" else "")
@@ -149,9 +149,11 @@ fun AddexpenseCard(
             onClick = {
                 if(id!=-1){
                     viewModel.updateExpense(id,amount,type,description)
+                    navController.navigate("Home")
                 }
                 else{
                     viewModel.addExpense(amount,type,description)
+                    navController.navigate("Home")
                 }
             }
         ) {

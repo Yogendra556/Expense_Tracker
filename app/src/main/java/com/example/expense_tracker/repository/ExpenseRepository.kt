@@ -25,7 +25,7 @@ class ExpenseRepository @Inject constructor(
         return ExpenseDao.getAllExpense()
     }
 
-    fun getElement(id:Int?):expenseEntity {
+    suspend fun getElement(id:Int?):expenseEntity {
         return ExpenseDao.getElement(id)
     }
 

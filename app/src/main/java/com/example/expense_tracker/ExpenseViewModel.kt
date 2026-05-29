@@ -80,6 +80,14 @@ class ExpenseViewModel @Inject constructor(
     }
 
     fun getPreviousElement(id:Int?):expenseEntity{
-             return repository.getElement(id)
+           var item = expenseEntity(
+               amount = 0,
+               type = "",
+               description = "",
+               dateTime = 0)
+        viewModelScope.launch {
+            item = repository.getElement(id)
+        }
+        return item
     }
 }
