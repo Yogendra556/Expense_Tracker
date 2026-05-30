@@ -48,8 +48,8 @@ fun AddexpenseCard(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val options = listOf(
-            "income",
-            "expense"
+            "Income",
+            "Expense"
         )
             val previousItem = viewModel.getPreviousElement(id)
 

@@ -1,6 +1,9 @@
 package com.example.expense_tracker.UILayer
 
+import android.os.Build
 import android.service.autofill.OnClickAction
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +55,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.expense_tracker.ExpenseViewModel
 import com.example.expense_tracker.room.expenseEntity
 import java.time.LocalDate
+import java.util.Calendar
 import kotlin.math.exp
+import kotlin.math.log
 
 @Composable
 fun frontScreenRoute(
@@ -63,13 +68,18 @@ fun frontScreenRoute(
     FrontScreen(navController,item)
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FrontScreen(
     navController: NavController,
-   expenseList : List<expenseEntity>,
-//    viewModel: ExpenseViewModel = hiltViewModel()
+    expenseList : List<expenseEntity>,
+    viewModel: ExpenseViewModel = hiltViewModel()
 ){
+
+       var filteredList by remember(expenseList){
+           mutableStateOf(expenseList)
+       }
         Column(
             modifier = Modifier
                 .padding(top = 8.dp)
@@ -87,8 +97,13 @@ fun FrontScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val month = LocalDate.now().month.name
-                        IconButton(onClick = {}) {
+                        var month by remember {
+                            mutableStateOf(LocalDate.now().month.value)
+                        }
+                        IconButton(onClick = {
+                            if(month==0) month = 11 else month--
+                            filteredList = viewModel.filterByMonth(month,expenseList)
+                        }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                                 contentDescription = "Previous Month"
@@ -96,9 +111,13 @@ fun FrontScreen(
                         }
                         Text(
                             fontSize = 18.sp,
-                            text = "${month}"
+                            text = "${java.time.Month.of(month+1).name}"
                         )
-                        IconButton(onClick = {}) {
+
+                        IconButton(onClick = {
+                            if(month==11) month = 0 else month++
+                            filteredList = viewModel.filterByMonth(month,expenseList)
+                        }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = "Previous Month"
@@ -147,7 +166,7 @@ fun FrontScreen(
                                     expanded = false
                                 }
                             ){
-                                listOf("filter1","filter2").forEach { item->
+                                listOf("Income","Expense","High to Low","Low to High").forEach { item->
                                     DropdownMenuItem(
                                         text = {
                                             Text(item)
@@ -155,6 +174,7 @@ fun FrontScreen(
                                         onClick = {
                                             expanded = false
                                             filter = item
+                                            filteredList = viewModel.filter(filter,expenseList)
                                         }
                                     )
                                 }
@@ -172,7 +192,7 @@ fun FrontScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    items(expenseList){item->
+                    items(filteredList){item->
                         expenseCard(item,navController)
                     }
                 }
@@ -196,7 +216,7 @@ fun FrontScreen(
 fun expenseCard(
     item : expenseEntity,
     navController: NavController,
-//    viewModel: ExpenseViewModel = hiltViewModel()
+    viewModel: ExpenseViewModel = hiltViewModel()
 ){
     Column(
         modifier = Modifier.padding(8.dp)
@@ -228,7 +248,7 @@ fun expenseCard(
                 modifier = Modifier
             ){
                 IconButton(onClick = {
-//                    viewModel.deleteExpense(item.id)
+                    viewModel.deleteExpense(item.id)
                 }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -241,6 +261,7 @@ fun expenseCard(
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun FrontScreenView(){
