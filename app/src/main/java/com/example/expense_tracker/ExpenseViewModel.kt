@@ -1,7 +1,9 @@
 package com.example.expense_tracker
 
 import android.icu.util.Calendar
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expense_tracker.repository.ExpenseRepository
@@ -23,8 +25,8 @@ class ExpenseViewModel @Inject constructor(
     val message = _message.asSharedFlow()
 
 
-     fun addExpense(amount: String,type: String,description: String) {
-         if (amount.isBlank() || type.isBlank() || description.isBlank()) {
+     fun addExpense(amount: String,type: String,category: String,description: String) {
+         if (amount.isBlank() || type.isBlank() || description.isBlank() || category.isBlank()) {
              viewModelScope.launch {
                  _message.emit("Please fill all fields")
              }
@@ -40,6 +42,7 @@ class ExpenseViewModel @Inject constructor(
              val item = expenseEntity(
                  amount = amountInt,
                  type = type,
+                 category = category,
                  description = description,
                  dateTime = System.currentTimeMillis()
              )
@@ -50,8 +53,8 @@ class ExpenseViewModel @Inject constructor(
          }
      }
 
-    fun updateExpense(id: Int,amount:String,type: String,description: String){
-        if(amount.isBlank() || type.isBlank() || description.isBlank()){
+    fun updateExpense(id: Int,amount:String,type: String,category: String,description: String){
+        if(amount.isBlank() || type.isBlank() || description.isBlank() || category.isBlank()){
             viewModelScope.launch {
                 _message.emit("Please fill all fields")
             }
@@ -62,6 +65,7 @@ class ExpenseViewModel @Inject constructor(
             id = id,
             amount = amountInt,
             type = type,
+            category = category,
             description = description,
             dateTime = System.currentTimeMillis()
         )
@@ -86,6 +90,7 @@ class ExpenseViewModel @Inject constructor(
            var item = expenseEntity(
                amount = 0,
                type = "",
+               category = "",
                description = "",
                dateTime = 0)
         viewModelScope.launch {
@@ -117,12 +122,25 @@ class ExpenseViewModel @Inject constructor(
         }
     }
 
-    fun filterByMonth(month:Int,expenseList:List<expenseEntity>):List<expenseEntity>{
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun filterByMonth(month:Int, expenseList:List<expenseEntity>):List<expenseEntity>{
         val calendar = Calendar.getInstance()
         return expenseList.filter {
 
             calendar.timeInMillis = it.dateTime
             calendar.get(Calendar.MONTH) == month && calendar.get(Calendar.YEAR) == LocalDate.now().year
         }
+    }
+
+    fun totalBalance(expenseList: List<expenseEntity>): Int {
+        var total = 0
+        expenseList.forEach { item ->
+            if (item.type == "Income") {
+                total += item.amount
+            } else {
+                total -= item.amount
+            }
+        }
+       return total
     }
 }

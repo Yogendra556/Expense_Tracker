@@ -5,6 +5,7 @@ import android.service.autofill.OnClickAction
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,11 +13,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -43,8 +46,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,11 +60,15 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.expense_tracker.ExpenseViewModel
 import com.example.expense_tracker.room.expenseEntity
+import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import kotlin.math.exp
 import kotlin.math.log
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun frontScreenRoute(
     navController: NavController,
@@ -74,8 +84,12 @@ fun frontScreenRoute(
 fun FrontScreen(
     navController: NavController,
     expenseList : List<expenseEntity>,
-    viewModel: ExpenseViewModel = hiltViewModel()
+//    viewModel: ExpenseViewModel = hiltViewModel()
 ){
+       var totalBalance by remember(expenseList){
+//           mutableStateOf(viewModel.totalBalance(expenseList))
+           mutableStateOf(-10739)
+       }
 
        var filteredList by remember(expenseList){
            mutableStateOf(expenseList)
@@ -88,6 +102,7 @@ fun FrontScreen(
             Box(
                modifier = Modifier
                    .padding(top = 12.dp,start = 12.dp,end = 12.dp)
+
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -95,14 +110,16 @@ fun FrontScreen(
 
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+
                     ) {
                         var month by remember {
                             mutableStateOf(LocalDate.now().month.value)
                         }
                         IconButton(onClick = {
                             if(month==0) month = 11 else month--
-                            filteredList = viewModel.filterByMonth(month,expenseList)
+//                            filteredList = viewModel.filterByMonth(month,expenseList)
                         }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
@@ -111,12 +128,13 @@ fun FrontScreen(
                         }
                         Text(
                             fontSize = 18.sp,
-                            text = "${java.time.Month.of(month+1).name}"
+//                            text = "${java.time.Month.of(month+1).name}"
+                            text = "DECEMBER"
                         )
 
                         IconButton(onClick = {
                             if(month==11) month = 0 else month++
-                            filteredList = viewModel.filterByMonth(month,expenseList)
+//                            filteredList = viewModel.filterByMonth(month,expenseList)
                         }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -147,18 +165,22 @@ fun FrontScreen(
                              },
                             modifier = Modifier
                                 .align(Alignment.End)
-                                .padding(end = 12.dp),
+                                .padding(end = 8.dp)
                         ) {
                             OutlinedTextField(
                                 value = "Filter",
-                                 onValueChange = {},
+                                onValueChange = {},
                                 readOnly = true,
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded)
                                 },
                                 modifier = Modifier.menuAnchor(
                                     MenuAnchorType.PrimaryNotEditable
-                                ).fillMaxWidth(0.5f)
+                                ).fillMaxWidth().padding(start = 52.dp).height(48.dp),
+                                textStyle = TextStyle(
+                                    textAlign = TextAlign.End
+                                )
+
                             )
                             ExposedDropdownMenu(
                                expanded = expanded,
@@ -174,7 +196,7 @@ fun FrontScreen(
                                         onClick = {
                                             expanded = false
                                             filter = item
-                                            filteredList = viewModel.filter(filter,expenseList)
+//                                            filteredList = viewModel.filter(filter,expenseList)
                                         }
                                     )
                                 }
@@ -185,14 +207,42 @@ fun FrontScreen(
             }
             Box(
                 modifier = Modifier
+                    .padding(start = 16.dp,end = 16.dp,top = 8.dp)
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .border(2.dp,Color.Black, shape = RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ){
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                ) {
+                    Text(
+                        text = "BALANCE : ",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(12.dp),
+                        text = "${totalBalance}",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (totalBalance < 0) Color.Red else Color.Green
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
                     .padding(top = 12.dp)
                     .fillMaxSize()
-                    .background(color = Color.Red)
             ) {
                 LazyColumn(
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     items(filteredList){item->
+
                         expenseCard(item,navController)
                     }
                 }
@@ -216,30 +266,64 @@ fun FrontScreen(
 fun expenseCard(
     item : expenseEntity,
     navController: NavController,
-    viewModel: ExpenseViewModel = hiltViewModel()
+//    viewModel: ExpenseViewModel = hiltViewModel()
 ){
+    val backgroundColor = if (item.type == "Income") {
+        Color(0xFFE8F5E9)
+    } else {
+        Color(0xFFFFEBEE)
+    }
     Column(
-        modifier = Modifier.padding(8.dp)
+        modifier = Modifier
+            .padding(8.dp)
+            .border(1.dp, Color.Black)
+            .background(backgroundColor)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(start=16.dp,top=16.dp,end=16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("${item.amount}")
-            Text("${item.type}")
-            Text("${item.dateTime}")
+            val formatter = SimpleDateFormat("dd/MM/yy, hh:mm a", Locale.getDefault())
+            val date = formatter.format(Date(item.dateTime))
+            Text("${date}")
             Text("Update", modifier = Modifier.clickable(onClick = {
                 navController.navigate("Add/${item.id}")
             }))
         }
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(start = 16.dp,top = 8.dp)
+        ) {
+
+            Box(
+                modifier = Modifier.padding(bottom = 8.dp)
+            ){
+                Text(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    text = "${if(item.type=="Income") "+" else "-"} ₹ ${item.amount}",
+                    color = if(item.type=="Income") Color.Green else Color.Red
+                )
+            }
+            Box(
+
+            ){
+                Text(
+                    fontSize = 18.sp,
+                    text = "${item.category}"
+                )
+            }
+
+        }
         Row(
-           horizontalArrangement = Arrangement.SpaceBetween
+           horizontalArrangement = Arrangement.SpaceBetween,
+
         ) {
             Box(
                 modifier = Modifier
-                    .padding(12.dp)
+                    .padding(14.dp)
                     .fillMaxWidth(0.9f)
             ) {
                 Text("${item.description}")
@@ -248,7 +332,7 @@ fun expenseCard(
                 modifier = Modifier
             ){
                 IconButton(onClick = {
-                    viewModel.deleteExpense(item.id)
+//                    viewModel.deleteExpense(item.id)
                 }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -268,12 +352,14 @@ fun FrontScreenView(){
     val item1 = expenseEntity(
         amount = 100,
         type = "uinc",
+        category = "ijif",
         description = "njejkd",
-        dateTime = 7389
+        dateTime = 7389,
     )
     val item2 = expenseEntity(
         amount = 100,
         type = "uinc",
+        category = "ijif",
         description = "njejkd",
         dateTime = 7389
     )

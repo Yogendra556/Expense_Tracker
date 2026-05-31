@@ -51,7 +51,10 @@ fun AddexpenseCard(
             "Income",
             "Expense"
         )
+        val categ = listOf("Food","Shopping","Travel","Others")
+        val categ2 = listOf("Salary","Bonus","Others")
             val previousItem = viewModel.getPreviousElement(id)
+
 
             var amount by remember {
                 mutableStateOf(if(id!=-1) "${previousItem.amount}" else "")
@@ -62,8 +65,14 @@ fun AddexpenseCard(
             var type by remember {
                 mutableStateOf(if(id!=-1) "${previousItem.type}" else options[0])
             }
+            var category by remember {
+            mutableStateOf(if(id!=-1) "${previousItem.category}" else categ[0])
+            }
 
         var expanded by remember {
+            mutableStateOf(false)
+        }
+        var expanded1 by remember {
             mutableStateOf(false)
         }
         Box(
@@ -81,7 +90,7 @@ fun AddexpenseCard(
                     onValueChange = {},
                     readOnly = true,
                     label = {
-                        Text("Category")
+                        Text("Type")
                     },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded)
@@ -107,6 +116,64 @@ fun AddexpenseCard(
                                 type = item
                             }
                         )
+                    }
+                }
+            }
+        }
+        Box(
+            modifier = Modifier
+                .padding(12.dp)
+        ){
+            ExposedDropdownMenuBox(
+                expanded = expanded1,
+                onExpandedChange = {
+                    expanded1 = !expanded1
+                }
+            ) {
+                OutlinedTextField(
+                    value = category,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = {
+                        Text("Category")
+                    },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded1)
+                    },
+                    modifier = Modifier.menuAnchor(
+                        MenuAnchorType.PrimaryNotEditable
+                    )
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded1,
+                    onDismissRequest = {
+                        expanded1 = false
+                    }
+                ) {
+                    if(type=="Income") {
+                        categ2.forEach { item ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(item)
+                                },
+                                onClick = {
+                                    expanded1 = false
+                                    type = item
+                                }
+                            )
+                        }
+                    }else{
+                        categ.forEach { item ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(item)
+                                },
+                                onClick = {
+                                    expanded1 = false
+                                    type = item
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -148,11 +215,11 @@ fun AddexpenseCard(
                 .padding(top=28.dp),
             onClick = {
                 if(id!=-1){
-                    viewModel.updateExpense(id,amount,type,description)
+                    viewModel.updateExpense(id,amount,type,category,description)
                     navController.navigate("Home")
                 }
                 else{
-                    viewModel.addExpense(amount,type,description)
+                    viewModel.addExpense(amount,type,category,description)
                     navController.navigate("Home")
                 }
             }
@@ -171,6 +238,7 @@ fun AddScreenPreview(){
     val item = expenseEntity(
         amount = 0,
         type = "",
+        category = "",
         description = "",
         dateTime = 0
     )
