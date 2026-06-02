@@ -99,27 +99,33 @@ class ExpenseViewModel @Inject constructor(
         return item
     }
 
-    fun filter(filter:String,expenseList:List<expenseEntity>):List<expenseEntity>{
-
+    fun filter(filter:String,selectedCategory:String,expenseList:List<expenseEntity>):List<expenseEntity>{
+        var result = expenseList
+        if(selectedCategory!=""){
+            result = expenseList.filter { item->
+                item.category == selectedCategory
+            }
+        }
         if(filter == "Income" || filter=="Expense") {
-            return expenseList.filter {
+            result = result.filter {
                 it.type == filter
 
             }
         }
         else if(filter == "High to Low"){
-            return expenseList.sortedByDescending {
+            result = result.sortedByDescending {
                 it.amount
             }
         }
         else if(filter == "Low to High"){
-            return expenseList.sortedBy {
+            result = result.sortedBy {
                 it.amount
             }
         }
         else{
             return expenseList
         }
+        return result
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -142,5 +148,17 @@ class ExpenseViewModel @Inject constructor(
             }
         }
        return total
+    }
+
+
+    fun searchByValue(searchValue:String,expenseList: List<expenseEntity>):List<expenseEntity>{
+        if(searchValue==""){
+            return expenseList
+        }
+        else {
+            return expenseList.filter { item ->
+                item.description.contains(searchValue)
+            }
+        }
     }
 }

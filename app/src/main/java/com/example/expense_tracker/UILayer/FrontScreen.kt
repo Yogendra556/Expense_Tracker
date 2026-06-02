@@ -38,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.TextStyle
@@ -60,6 +62,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.expense_tracker.ExpenseViewModel
 import com.example.expense_tracker.room.expenseEntity
+import dagger.hilt.android.lifecycle.HiltViewModel
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.Calendar
@@ -94,6 +97,15 @@ fun FrontScreen(
        var filteredList by remember(expenseList){
            mutableStateOf(expenseList)
        }
+
+        var selectedCategory by remember {
+            mutableStateOf("")
+        }
+
+        var searchValue by remember {
+        mutableStateOf("")
+        }
+
         Column(
             modifier = Modifier
                 .padding(top = 8.dp)
@@ -196,7 +208,7 @@ fun FrontScreen(
                                         onClick = {
                                             expanded = false
                                             filter = item
-//                                            filteredList = viewModel.filter(filter,expenseList)
+//                                            filteredList = viewModel.filter(filter,selectedCategory,expenseList)
                                         }
                                     )
                                 }
@@ -205,34 +217,18 @@ fun FrontScreen(
                     }
                 }
             }
-            Box(
-                modifier = Modifier
-                    .padding(start = 16.dp,end = 16.dp,top = 8.dp)
-                    .fillMaxWidth()
-                    .height(64.dp)
-                    .border(2.dp,Color.Black, shape = RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ){
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                ) {
-                    Text(
-                        text = "BALANCE : ",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        modifier = Modifier
-                            .padding(12.dp),
-                        text = "${totalBalance}",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (totalBalance < 0) Color.Red else Color.Green
-                    )
-                }
-            }
+
+            filterCards(
+                selectedCategory,
+                onValueChange = {
+                    selectedCategory = it
+//                    filteredList = viewModel.filter(filter,selectedCategory,expenseList)
+                })
+            TotalBalance(totalBalance)
+            SearchBar(searchValue,onValueChange={
+                searchValue = it
+//                filteredList = viewModel.searchByValue(searchValue,expenseList)
+            })
             Box(
                 modifier = Modifier
                     .padding(top = 12.dp)
@@ -344,11 +340,93 @@ fun expenseCard(
     }
 }
 
+@Composable
+fun filterCards(
+    selectedCategory: String,
+    onValueChange: (String) -> Unit = {}
+){
+  Row(
+      modifier = Modifier
+          .fillMaxWidth(0.85f)
+          .height(48.dp)
+          .border(2.dp,Color.LightGray, shape = RoundedCornerShape(12.dp)),
+      horizontalArrangement = Arrangement.SpaceEvenly,
+      verticalAlignment = Alignment.CenterVertically,
+  ) {
+      val FilterList = listOf("Food","Shopping","Travel","Others")
+      FilterList.forEach { item->
+          Box(
+              modifier = if(selectedCategory==item) Modifier
+                  .clip(shape = RoundedCornerShape(12.dp))
+                  .background(color = Color(0xFF8F7BBD))
+                  .border(1.dp, color = Color.Black, shape = RoundedCornerShape(12.dp))
+              else Modifier.clickable(
+                  onClick = {
+                      onValueChange(item)
+                  }
+              )
+          ){
+              Text(
+                  modifier = Modifier
+                      .padding(horizontal = 10.dp, vertical = 8.dp),
+                  text = "${item}"
+              )
+          }
+      }
+  }
+}
+
+@Composable
+fun TotalBalance(
+   totalBalance : Int
+){
+    Box(
+        modifier = Modifier
+            .padding(start = 16.dp,end = 16.dp,top = 8.dp)
+            .fillMaxWidth()
+            .height(64.dp)
+            .border(2.dp,Color.Black, shape = RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center
+    ){
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+        ) {
+            Text(
+                text = "BALANCE : ",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                modifier = Modifier
+                    .padding(12.dp),
+                text = "${totalBalance}",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (totalBalance < 0) Color.Red else Color.Green
+            )
+        }
+    }
+}
+
+@Composable
+fun SearchBar(
+    searchValue: String,
+    onValueChange: (String) -> Unit = {}
+){
+     OutlinedTextField(
+         value = searchValue,
+         onValueChange = onValueChange,
+         modifier = Modifier
+             .fillMaxWidth(0.9f)
+     )
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
-fun FrontScreenView(){
+fun FrontScreenView() {
     val item1 = expenseEntity(
         amount = 100,
         type = "uinc",
@@ -364,5 +442,12 @@ fun FrontScreenView(){
         dateTime = 7389
     )
     val navController = rememberNavController()
-    FrontScreen(navController,listOf(item1,item2))
+//    FrontScreen(navController,listOf(item1,item2))
+    Box(
+        modifier = Modifier.padding(12.dp).fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+
+    ) {
+        SearchBar("",{})
+    }
 }
