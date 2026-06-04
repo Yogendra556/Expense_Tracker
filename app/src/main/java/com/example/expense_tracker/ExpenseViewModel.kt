@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.math.exp
 
 @HiltViewModel
 class ExpenseViewModel @Inject constructor(
@@ -150,7 +151,6 @@ class ExpenseViewModel @Inject constructor(
        return total
     }
 
-
     fun searchByValue(searchValue:String,expenseList: List<expenseEntity>):List<expenseEntity>{
         if(searchValue==""){
             return expenseList
@@ -160,5 +160,56 @@ class ExpenseViewModel @Inject constructor(
                 item.description.contains(searchValue)
             }
         }
+    }
+
+    fun expenseTotals(expenseList: List<expenseEntity>): Map<String, Int>{
+        var foodCount = 0
+        var travelCount = 0
+        var shoppingCount = 0
+        var otherCount = 0
+        expenseList.forEach {item->
+            if(item.category=="Food"){
+                foodCount+=item.amount
+            }
+            else if(item.category=="Travel"){
+                travelCount+=item.amount
+            }
+            else if(item.category=="Shopping"){
+                shoppingCount+=item.amount
+            }
+            else{
+                otherCount+=item.amount
+            }
+            }
+        return mapOf("Food" to foodCount,"Travel" to travelCount,"Shopping" to shoppingCount,"Others" to otherCount)
+    }
+
+    fun incomeTotals(expenseList: List<expenseEntity>): Map<String, Int>{
+        var salaryCount = 0
+        var bonusCount = 0
+        var otherIncomeCount = 0
+
+        expenseList.forEach { item->
+            if(item.category=="Salary"){
+                salaryCount+=item.amount
+            }
+            else if(item.category=="Bonus"){
+                bonusCount+=item.amount
+            }
+            else{
+                otherIncomeCount+=item.amount
+            }
+        }
+        return mapOf("Salary" to salaryCount,"Bonus" to bonusCount,"Others" to otherIncomeCount)
+    }
+
+    fun filterByDate(type:String,expenseList: List<expenseEntity>,startDate:Long,endDate:Long):Map<String, Int>{
+
+        val list = expenseList.filter {item->
+            item.type==type && item.dateTime>=startDate && item.dateTime<=endDate
+        }
+
+        if(type=="Income") return incomeTotals(list)
+        return expenseTotals(list)
     }
 }

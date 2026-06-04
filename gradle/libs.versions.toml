@@ -13,6 +13,7 @@ room = "2.6.1"
 ksp = "2.0.21-1.0.28"
 hiltNavigationCompose = "1.2.0"
 
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

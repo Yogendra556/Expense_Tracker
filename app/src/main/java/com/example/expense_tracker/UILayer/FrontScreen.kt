@@ -87,11 +87,10 @@ fun frontScreenRoute(
 fun FrontScreen(
     navController: NavController,
     expenseList : List<expenseEntity>,
-//    viewModel: ExpenseViewModel = hiltViewModel()
+    viewModel: ExpenseViewModel = hiltViewModel()
 ){
        var totalBalance by remember(expenseList){
-//           mutableStateOf(viewModel.totalBalance(expenseList))
-           mutableStateOf(-10739)
+           mutableStateOf(viewModel.totalBalance(expenseList))
        }
 
        var filteredList by remember(expenseList){
@@ -103,6 +102,12 @@ fun FrontScreen(
         }
 
         var searchValue by remember {
+        mutableStateOf("")
+        }
+        var expanded by remember{
+        mutableStateOf(false)
+        }
+        var filter by remember{
         mutableStateOf("")
         }
 
@@ -131,7 +136,7 @@ fun FrontScreen(
                         }
                         IconButton(onClick = {
                             if(month==0) month = 11 else month--
-//                            filteredList = viewModel.filterByMonth(month,expenseList)
+                            filteredList = viewModel.filterByMonth(month,expenseList)
                         }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
@@ -146,7 +151,7 @@ fun FrontScreen(
 
                         IconButton(onClick = {
                             if(month==11) month = 0 else month++
-//                            filteredList = viewModel.filterByMonth(month,expenseList)
+                            filteredList = viewModel.filterByMonth(month,expenseList)
                         }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -154,6 +159,7 @@ fun FrontScreen(
                             )
                         }
                     }
+
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -164,12 +170,7 @@ fun FrontScreen(
 //                                .padding(end = 12.dp),
 //                            text = "filter"
 //                        )
-                        var expanded by remember{
-                            mutableStateOf(false)
-                        }
-                        var filter by remember{
-                            mutableStateOf("")
-                        }
+
                         ExposedDropdownMenuBox(
                              expanded = expanded,
                              onExpandedChange = {
@@ -208,7 +209,7 @@ fun FrontScreen(
                                         onClick = {
                                             expanded = false
                                             filter = item
-//                                            filteredList = viewModel.filter(filter,selectedCategory,expenseList)
+                                            filteredList = viewModel.filter(filter,selectedCategory,expenseList)
                                         }
                                     )
                                 }
@@ -222,12 +223,12 @@ fun FrontScreen(
                 selectedCategory,
                 onValueChange = {
                     selectedCategory = it
-//                    filteredList = viewModel.filter(filter,selectedCategory,expenseList)
+                    filteredList = viewModel.filter(filter,selectedCategory,expenseList)
                 })
             TotalBalance(totalBalance)
             SearchBar(searchValue,onValueChange={
                 searchValue = it
-//                filteredList = viewModel.searchByValue(searchValue,expenseList)
+                filteredList = viewModel.searchByValue(searchValue,expenseList)
             })
             Box(
                 modifier = Modifier
@@ -262,7 +263,7 @@ fun FrontScreen(
 fun expenseCard(
     item : expenseEntity,
     navController: NavController,
-//    viewModel: ExpenseViewModel = hiltViewModel()
+    viewModel: ExpenseViewModel = hiltViewModel()
 ){
     val backgroundColor = if (item.type == "Income") {
         Color(0xFFE8F5E9)
@@ -328,7 +329,7 @@ fun expenseCard(
                 modifier = Modifier
             ){
                 IconButton(onClick = {
-//                    viewModel.deleteExpense(item.id)
+                    viewModel.deleteExpense(item.id)
                 }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
