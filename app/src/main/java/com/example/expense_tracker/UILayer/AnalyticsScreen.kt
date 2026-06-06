@@ -1,20 +1,35 @@
 package com.example.expense_tracker.UILayer
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.Typeface
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,14 +50,18 @@ import com.example.expense_tracker.ExpenseViewModel
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
+import com.github.mikephil.charting.highlight.Highlight
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import java.time.Instant
 import java.time.ZoneId
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AnalyticScreen(
     navController: NavController,
@@ -50,9 +71,7 @@ fun AnalyticScreen(
       mutableStateOf("Income")
   }
     val expenseList by viewModel.getExpense().collectAsState(emptyList())
-    var barChartFilter by remember {
-        mutableStateOf("Days")
-    }
+
     var incomeChartFilter by remember {
         mutableStateOf("This Month")
     }
@@ -94,22 +113,42 @@ fun AnalyticScreen(
         incomeStartDate = start
         incomeEndDate = end
     })
-    expensePieChart(expenseChartFilter,expenseTotals,onValueChange={expenseChartFilter = it})
+    expensePieChart(expenseChartFilter,expenseTotals,onValueChange={expenseChartFilter = it},dateChange = {start,end->
+        expenseStartDate = start
+        expenseEndDate = end
+    })
 
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun incomePieChart(
     filterType: String,
     incomeList: Map<String,Int>,
     onValueChange1: (String) -> Unit = {},
-    dateChange:(Long, Long) -> Unit
+    dateChange:(Long, Long) -> Unit,
 ) {
+    var selectedLabel by remember {
+        mutableStateOf("Not selected")
+    }
+
+    var selectedAmount by remember {
+        mutableFloatStateOf(0f)
+    }
+
+    var selectedPercent by remember {
+        mutableFloatStateOf(0f)
+    }
     Column(
 
     ) {
-        filterDropDown(filterType,onValueChange1,dateChange)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            selectedPieChartInfo(selectedLabel, selectedAmount, selectedPercent)
+            filterDropDown(filterType, onValueChange1, dateChange)
+        }
         Box() {
             AndroidView(
                 modifier = Modifier
@@ -122,9 +161,7 @@ fun incomePieChart(
                         isDrawHoleEnabled = true
                         centerText = "Income"
 
-                        setEntryLabelTextSize(12f)
-                        setEntryLabelColor(android.graphics.Color.BLACK)
-                        setUsePercentValues(true)
+
                         setCenterTextSize(18f)
                         setCenterTextTypeface(android.graphics.Typeface.DEFAULT_BOLD)
                     }
@@ -137,42 +174,85 @@ fun incomePieChart(
                         )
                     }
 
+                    chart.setOnChartValueSelectedListener(
+                        object : OnChartValueSelectedListener{
+
+                            override fun onValueSelected(e: Entry?, h: Highlight?) {
+                                val pieEntry = e as PieEntry
+
+                                val total = incomeList.values.sum()
+
+                                val percent = pieEntry.value*100f/total
+
+                                selectedLabel = pieEntry.label
+                                selectedAmount = pieEntry.value
+                                selectedPercent = percent
+
+                            }
+
+                            override fun onNothingSelected() {
+
+                            }
+                        }
+                    )
                     val dataset = PieDataSet(entries, "")
                     dataset.colors = listOf(
                         android.graphics.Color.parseColor("#4E79A7"),
                         android.graphics.Color.parseColor("#59A14F"),
                         android.graphics.Color.parseColor("#F28E2B")
                     )
-                    dataset.valueTextSize = 12f
+                   dataset.setDrawValues(false)
                     val data = PieData(dataset)
                     data.setValueFormatter(
                         PercentFormatter(chart)
                     )
                     chart.data = data
+                    chart.setDrawEntryLabels(false)
                     chart.invalidate()
                 }
             )
         }
     }
 }
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun expensePieChart(
     filterType: String,
     expenseTotals: Map<String,Int>,
-    onValueChange: (String) -> Unit = {}
+    onValueChange: (String) -> Unit = {},
+    dateChange:(Long,Long) -> Unit
 ) {
-    Column() {
-//        filterDropDown(filterType,onValueChange)
-        AndroidView(
+    var selectedLabel by remember {
+        mutableStateOf("Not selected")
+    }
+
+    var selectedAmount by remember {
+        mutableFloatStateOf(0f)
+    }
+
+    var selectedPercent by remember {
+        mutableFloatStateOf(0f)
+    }
+    Column(
+        modifier = Modifier
+            .padding(top = 16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            selectedPieChartInfo(selectedLabel, selectedAmount, selectedPercent)
+            filterDropDown(filterType, onValueChange, dateChange)
+        }
+            AndroidView(
+                modifier = Modifier.fillMaxWidth()
+                .height(300.dp),
             factory = { context ->
                 PieChart(context).apply {
                     description.isEnabled = false
                     isDrawHoleEnabled = true
                     centerText = "Expense"
 
-                    setEntryLabelTextSize(12f)
-                    setEntryLabelColor(android.graphics.Color.BLACK)
-                    setUsePercentValues(true)
+                    setDrawEntryLabels(false)
                     setCenterTextSize(18f)
                     setCenterTextTypeface(android.graphics.Typeface.DEFAULT_BOLD)
                 }
@@ -191,7 +271,7 @@ fun expensePieChart(
                     android.graphics.Color.parseColor("#F28E2B"),
                     android.graphics.Color.parseColor("#E15759")
                 )
-                dataSet.valueTextSize = 12f
+                dataSet.setDrawValues(false)
                 val data = PieData(dataSet)
                 data.setValueFormatter(
                     PercentFormatter(chart)
@@ -204,6 +284,7 @@ fun expensePieChart(
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun filterDropDown(
@@ -215,6 +296,9 @@ fun filterDropDown(
         mutableStateOf(false)
     }
     val filterItems = listOf("This Month","Previous Month","Custom Range")
+    var showCustomRange by remember {
+        mutableStateOf(false)
+    }
     Box(
         modifier = Modifier.padding(8.dp).fillMaxWidth(),
     ) {
@@ -268,19 +352,142 @@ fun filterDropDown(
 
                                 dateChangeFun(start,end)
                             }
+                            else if(it=="Custom Range"){
+                               showCustomRange = true
+                            }
                         }
                     )
                 }
             }
         }
+        if(showCustomRange){
+            customRangeFilter(
+                dateChangeFun = dateChangeFun,
+                onDismiss = {
+                    showCustomRange = false
+                }
+            )
+        }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun customRangeFilter(
+    dateChangeFun: (Long, Long) -> Unit,
+    onDismiss:()-> Unit
+){
+
+    val startDateState = rememberDatePickerState()
+    val endDateState = rememberDatePickerState()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            Button(
+                onClick = {
+                    val start = startDateState.selectedDateMillis
+                    val end = endDateState.selectedDateMillis
+
+                        if(start!=null && end!=null && start<=end){
+                            dateChangeFun(start,end)
+                            onDismiss()
+                        }
+                    }
+            ){
+                Text(text="Apply FIlters")
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = {
+                    onDismiss()
+                }
+            ) {
+                Text(text="Cancel")
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                Text(text="Start Date")
+                DatePicker(state = startDateState)
+                Spacer(Modifier.height(16.dp))
+                Text(text="End Date")
+                DatePicker(state = endDateState)
+
+            }
+        }
+    )
+}
+@Composable
+fun selectedPieChartInfo(
+    label:String,
+    amount: Float,
+    percent : Float
+){
+    Box(
+        modifier = Modifier
+            .padding(start = 24.dp)
+            .border(1.dp,color = Color.Black, shape = RoundedCornerShape(12.dp))
+            .fillMaxWidth(0.3f)
+    )
+     {
+         Column(
+             modifier = Modifier
+                 .padding(start = 12.dp,top = 6.dp,bottom = 6.dp)
+
+         ) {
+
+                 Text(
+                     modifier = Modifier.padding(vertical = 4.dp),
+                     fontWeight = FontWeight.Bold , text = "${label}")
+
+                 Text(
+                     fontWeight = FontWeight.Bold , text = "${amount}")
+
+                 Text(
+                     modifier = Modifier.padding(vertical = 4.dp),
+                     fontWeight = FontWeight.Bold , text = "${percent}")
+
+          }
+      }
+}
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
-fun previewScreen(){
+fun previewScreen() {
     val navController = rememberNavController()
-    val map = mapOf("Salary" to 1000,"Bonus" to 2000,"Others" to 3000)
-//    incomePieChart("This Month",map,{},{})
-    val map1 = mapOf("Travel" to 1299,"Food" to 3827,"Shopping" to 6738,"Other" to 2678)
-//    expensePieChart(map1)
+    var label by remember { mutableStateOf("Food") }
+    var amount by remember { mutableFloatStateOf(2500f) }
+    var percent by remember { mutableFloatStateOf(35f) }
+
+//    Column(
+//        modifier = Modifier.verticalScroll(rememberScrollState())
+//    ) {
+//
+//        incomePieChart(
+//            filterType = "This Month",
+//            incomeList = mapOf(
+//                "Salary" to 5000,
+//                "Bonus" to 2000,
+//                "Freelance" to 3000
+//            ),
+//            onValueChange1 = {},
+//            dateChange = { _, _ -> }
+//        )
+//        expensePieChart(
+//            filterType = "This Month",
+//            expenseTotals = mapOf(
+//                "Salary" to 5000,
+//                "Bonus" to 2000,
+//                "Freelance" to 3000
+//            ),
+//            onValueChange = {},
+//            dateChange = { _, _ -> }
+//        )
+//    }
+    MaterialTheme {
+        customRangeFilter(dateChangeFun = { _, _ -> }, onDismiss = {})
+    }
 }
